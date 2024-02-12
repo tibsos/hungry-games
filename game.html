@@ -19,7 +19,7 @@
 
         #gameCanvas {
             display: block;
-            background-image: url('static/background2.jpeg');
+            background-image: url('static/background4.jpg');
             background-size: cover; /* Adjust as needed */
             background-position: center; /* Adjust as needed */
         }
@@ -36,6 +36,30 @@
             font-size: 18px;
             cursor: pointer;
         }
+
+        #colorSelectorContainer {
+            margin-top: 20px;
+            display: flex;
+            justify-content: space-between;
+            width: 200px;
+        }
+
+        .colorSelector {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.2s; /* Added transform transition */
+            box-sizing: border-box; /* Ensure border doesn't affect element size */
+        }
+
+        .colorSelector:hover {
+            transform: scale(1.2);
+        }
+
+        .selected {
+            border: 2px solid black; /* Black border around selected color */
+        }
     </style>
 
 </head>
@@ -44,6 +68,7 @@
     <div id="startMenu">
         <h1>Голодные игры</h1>
         <button id="startButton">Start Game</button>
+        <div id="colorSelectorContainer"></div>
     </div>
     <canvas id="gameCanvas"></canvas>
     <script>
@@ -51,6 +76,7 @@
         const ctx = canvas.getContext('2d');
         const startButton = document.getElementById('startButton');
         const startMenu = document.getElementById('startMenu');
+        const colorSelectorContainer = document.getElementById('colorSelectorContainer');
 
         canvas.style.display = 'none'; // Hide canvas initially
 
@@ -64,24 +90,44 @@
             vyu: 0,
             vyd: 0,
             speed: 5,
+            color: '#FFFFFF' // Default player color (white)
         };
 
-        addEventListener('keydown', function(e) {
+        const defaultColors = ['#FFFFFF', '#FF0000', '#0000FF', '#00FF00', '#FFFF00'];
 
+        // Create color selectors
+        defaultColors.forEach(color => {
+            const colorSelector = document.createElement('div');
+            colorSelector.className = 'colorSelector';
+            colorSelector.style.backgroundColor = color;
+            if (color === player.color) {
+                colorSelector.classList.add('selected');
+            }
+            colorSelector.addEventListener('click', () => selectColor(color, colorSelector)); // Pass colorSelector element
+            colorSelectorContainer.appendChild(colorSelector);
+        });
+
+        function selectColor(color, colorSelector) {
+            player.color = color;
+            // Remove 'selected' class from all color selectors
+            const colorSelectors = document.querySelectorAll('.colorSelector');
+            colorSelectors.forEach(selector => selector.classList.remove('selected'));
+            // Add 'selected' class to the clicked color selector
+            colorSelector.classList.add('selected');
+        }
+
+        addEventListener('keydown', function (e) {
             if (e.code == 'ArrowRight') player.vxr = player.speed;
             if (e.code == 'ArrowLeft') player.vxl = -player.speed;
             if (e.code == 'ArrowUp') player.vyu = -player.speed;
             if (e.code == 'ArrowDown') player.vyd = player.speed;
-
         });
 
-        addEventListener('keyup', function(e) {
-
+        addEventListener('keyup', function (e) {
             if (e.code == 'ArrowRight') player.vxr = 0;
             if (e.code == 'ArrowLeft') player.vxl = 0;
             if (e.code == 'ArrowUp') player.vyu = 0;
             if (e.code == 'ArrowDown') player.vyd = 0;
-
         });
 
         let level = 1;
@@ -112,7 +158,7 @@
         function drawPlayer() {
             ctx.beginPath();
             ctx.arc(player.x + player.width / 2, player.y + player.height / 2, player.width / 2, 0, Math.PI * 2);
-            ctx.fillStyle = "#FF0000";
+            ctx.fillStyle = player.color;
             ctx.fill();
             ctx.strokeStyle = "black"; // Black border
             ctx.lineWidth = 2; // Border width
@@ -165,19 +211,6 @@
             }
         }
 
-        function drawMonsters() {
-            for (let monster of monsters) {
-                ctx.beginPath();
-                ctx.rect(monster.x, monster.y, monster.width, monster.height);
-                ctx.fillStyle = "#00FF00";
-                ctx.fill();
-                ctx.strokeStyle = "black"; // Black border
-                ctx.lineWidth = 2; // Border width
-                ctx.stroke();
-                ctx.closePath();
-            }
-        }
-
         function spawnMonsters() {
             monsters = [];
             const padding = 40; // Padding to keep monsters away from the edges
@@ -222,6 +255,19 @@
         }
 
 
+        function drawMonsters() {
+            for (let monster of monsters) {
+                ctx.beginPath();
+                ctx.rect(monster.x, monster.y, monster.width, monster.height);
+                ctx.fillStyle = "#00FF00";
+                ctx.fill();
+                ctx.strokeStyle = "black"; // Black border
+                ctx.lineWidth = 2; // Border width
+                ctx.stroke();
+                ctx.closePath();
+            }
+        }
+
         function drawScore() {
             ctx.font = "16px Arial";
             ctx.fillStyle = "#FFF";
@@ -232,10 +278,9 @@
             if (!gameRunning) return;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             player.x += player.vxl;
-        player.x += player.vxr;
-
-        player.y += player.vyu;
-        player.y += player.vyd;
+            player.x += player.vxr;
+            player.y += player.vyu;
+            player.y += player.vyd;
             drawPlayer();
             drawBalloons();
             drawMonsters();
