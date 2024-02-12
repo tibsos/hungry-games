@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Голодные игры</title>
+
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #5e5475; /* Background color */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        #gameCanvas {
+            display: block;
+            background-image: url('static/background2.jpeg');
+            background-size: cover; /* Adjust as needed */
+            background-position: center; /* Adjust as needed */
+        }
+
+        #startMenu {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #startButton {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 18px;
+            cursor: pointer;
+        }
+    </style>
+
+</head>
+
+<body>
+    <div id="startMenu">
+        <h1>Голодные игры</h1>
+        <button id="startButton">Start Game</button>
+    </div>
+    <canvas id="gameCanvas"></canvas>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const startButton = document.getElementById('startButton');
+        const startMenu = document.getElementById('startMenu');
+
+        canvas.style.display = 'none'; // Hide canvas initially
+
+        const player = {
+            x: canvas.width / 2,
+            y: canvas.height / 2,
+            width: 20,
+            height: 20,
+            vxl: 0,
+            vxr: 0,
+            vyu: 0,
+            vyd: 0,
+            speed: 5,
+        };
+
+        addEventListener('keydown', function(e) {
+
+            if (e.code == 'ArrowRight') player.vxr = player.speed;
+            if (e.code == 'ArrowLeft') player.vxl = -player.speed;
+            if (e.code == 'ArrowUp') player.vyu = -player.speed;
+            if (e.code == 'ArrowDown') player.vyd = player.speed;
+
+        });
+
+        addEventListener('keyup', function(e) {
+
+            if (e.code == 'ArrowRight') player.vxr = 0;
+            if (e.code == 'ArrowLeft') player.vxl = 0;
+            if (e.code == 'ArrowUp') player.vyu = 0;
+            if (e.code == 'ArrowDown') player.vyd = 0;
+
+        });
+
+        let level = 1;
+        const totalBalloons = 10; // Static amount of balloons
+        let balloons = [];
+        let balloonsCollected = 0;
+        let monsters = [];
+        let totalMonsters = 2; // Initial number of monsters
+        let monsterSpeedMin = 1; // Initial speed of monsters
+        let monsterSpeedMax = 2; // Maximum speed of monsters
+        let gameRunning = false;
+
+        startButton.addEventListener('click', startGame);
+
+        function startGame() {
+            gameRunning = true;
+            startMenu.style.display = 'none';
+            canvas.style.display = 'block';
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            player.x = canvas.width / 2;
+            player.y = canvas.height / 2;
+            spawnBalloons();
+            spawnMonsters();
+            updateGame();
+        }
+
+        function drawPlayer() {
+            ctx.beginPath();
+            ctx.arc(player.x + player.width / 2, player.y + player.height / 2, player.width / 2, 0, Math.PI * 2);
+            ctx.fillStyle = "#FF0000";
+            ctx.fill();
+            ctx.strokeStyle = "black"; // Black border
+            ctx.lineWidth = 2; // Border width
+            ctx.stroke();
+            ctx.closePath();
+        }
+
+        function movePlayer() {
+            if (player.x < 0) {
+                player.x = 0;
+            }
+            if (player.x + player.width > canvas.width) {
+                player.x = canvas.width - player.width;
+            }
+            if (player.y < 0) {
+                player.y = 0;
+            }
+            if (player.y + player.height > canvas.height) {
+                player.y = canvas.height - player.height;
+            }
+        }
+
+        function drawBalloons() {
+            for (let i = 0; i < balloons.length; i++) {
+                let balloon = balloons[i];
+                if (!balloon.collected) {
+                    ctx.beginPath();
+                    ctx.arc(balloon.x, balloon.y, balloon.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = balloon.color;
+                    ctx.fill();
+                    ctx.strokeStyle = "black"; // Black border
+                    ctx.lineWidth = 2; // Border width
+                    ctx.stroke();
+                    ctx.closePath();
+                }
+            }
+        }
+
+        function spawnBalloons() {
+            balloons = [];
+            for (let i = 0; i < totalBalloons; i++) {
+                const balloon = {
+                    x: Math.random() * (canvas.width - 40) + 20,
+                    y: Math.random() * (canvas.height - 40) + 20,
+                    radius: 20,
+                    color: '#' + Math.floor(Math.random() * 16777215).toString(16), // Random color
+                    collected: false
+                };
+                balloons.push(balloon);
+            }
+        }
+
+        function drawMonsters() {
+            for (let monster of monsters) {
+                ctx.beginPath();
+                ctx.rect(monster.x, monster.y, monster.width, monster.height);
+                ctx.fillStyle = "#00FF00";
+                ctx.fill();
+                ctx.strokeStyle = "black"; // Black border
+                ctx.lineWidth = 2; // Border width
+                ctx.stroke();
+                ctx.closePath();
+            }
+        }
+
+        function spawnMonsters() {
+            monsters = [];
+            const padding = 40; // Padding to keep monsters away from the edges
+            for (let i = 0; i < totalMonsters; i++) {
+                let side = Math.floor(Math.random() * 4); // 0: top, 1: right, 2: bottom, 3: left
+                let x, y, speedX, speedY;
+
+                switch (side) {
+                    case 0: // top edge
+                        x = Math.random() * (canvas.width - padding * 2) + padding;
+                        y = padding;
+                        break;
+                    case 1: // right edge
+                        x = canvas.width - padding;
+                        y = Math.random() * (canvas.height - padding * 2) + padding;
+                        break;
+                    case 2: // bottom edge
+                        x = Math.random() * (canvas.width - padding * 2) + padding;
+                        y = canvas.height - padding;
+                        break;
+                    case 3: // left edge
+                        x = padding;
+                        y = Math.random() * (canvas.height - padding * 2) + padding;
+                        break;
+                }
+
+                speedX = (Math.random() * (monsterSpeedMax - monsterSpeedMin)) + monsterSpeedMin;
+                speedY = (Math.random() * (monsterSpeedMax - monsterSpeedMin)) + monsterSpeedMin;
+
+                if (Math.random() < 0.5) speedX *= -1;
+                if (Math.random() < 0.5) speedY *= -1;
+
+                monsters.push({
+                    x: x,
+                    y: y,
+                    width: 40,
+                    height: 40,
+                    speedX: speedX,
+                    speedY: speedY
+                });
+            }
+        }
+
+
+        function drawScore() {
+            ctx.font = "16px Arial";
+            ctx.fillStyle = "#FFF";
+            ctx.fillText("Level: " + level + " | Balloons Left: " + (totalBalloons - balloonsCollected), 20, 20);
+        }
+
+        function updateGame() {
+            if (!gameRunning) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            player.x += player.vxl;
+        player.x += player.vxr;
+
+        player.y += player.vyu;
+        player.y += player.vyd;
+            drawPlayer();
+            drawBalloons();
+            drawMonsters();
+            moveMonsters();
+            drawScore();
+            movePlayer();
+            checkCollision();
+            checkMonsterCollision();
+            requestAnimationFrame(updateGame);
+        }
+
+        function moveMonsters() {
+            for (let monster of monsters) {
+                monster.x += monster.speedX;
+                monster.y += monster.speedY;
+
+                // Reverse direction if hitting canvas edges
+                if (monster.x < 0 || monster.x + monster.width > canvas.width) {
+                    monster.speedX *= -1;
+                }
+                if (monster.y < 0 || monster.y + monster.height > canvas.height) {
+                    monster.speedY *= -1;
+                }
+            }
+        }
+
+        function checkCollision() {
+            for (let balloon of balloons) {
+                if (!balloon.collected && player.x < balloon.x + balloon.radius &&
+                    player.x + player.width > balloon.x - balloon.radius &&
+                    player.y < balloon.y + balloon.radius &&
+                    player.y + player.height > balloon.y - balloon.radius) {
+                    balloon.collected = true;
+                    balloonsCollected++;
+                    if (balloonsCollected === totalBalloons) {
+                        level++;
+                        balloonsCollected = 0;
+                        totalMonsters += 2;
+                        monsterSpeedMin += 0.5;
+                        monsterSpeedMax += 0.5;
+                        player.x = canvas.width / 2; // Respawn player at the center
+                        player.y = canvas.height / 2;
+                        spawnBalloons();
+                        spawnMonsters();
+                    }
+                }
+            }
+        }
+
+        function checkMonsterCollision() {
+            for (let monster of monsters) {
+                if (player.x < monster.x + monster.width &&
+                    player.x + player.width > monster.x &&
+                    player.y < monster.y + monster.height &&
+                    player.y + player.height > monster.y) {
+                    level = 1;
+                    balloonsCollected = 0;
+                    totalMonsters = 2;
+                    monsterSpeedMin = 1;
+                    monsterSpeedMax = 4;
+                    player.x = canvas.width / 2; // Respawn player at the center
+                    player.y = canvas.height / 2;
+                    spawnBalloons();
+                    spawnMonsters();
+                    break;
+                }
+            }
+        }
+    </script>
+
+</body>
+
+</html>

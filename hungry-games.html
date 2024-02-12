@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+</body>
+
+<style>
+
+    * {
+
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+
+    }
+
+    canvas {
+        background-image: url('static/background.jpg');
+        background-size: cover;
+        width: 100%;
+        height: 100%;
+        
+    }
+
+</style>
+
+<script>
+
+    const canvas = document.getElementById('canvas')
+    const ctx = canvas.getContext('2d')
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    /* Player */
+    const player = {
+
+        x: canvas.width / 2,
+        y: canvas.height / 2,
+
+        width: 20,
+        height: 20,
+
+        vxl: 0,
+        vxr: 0,
+        vyu: 0,
+        vyd: 0,
+
+        speed: 5,
+
+    }
+
+    /* Game */
+
+    let level = 1;
+    
+    let emeralds = [];
+    let emeraldsCollected = 0;
+
+    let monsters = [];
+    let totalMonsters = 2;
+    let monsterSpeed = 2;
+
+    function movePlayer() {
+
+        if (player.x < 0) {
+
+            player.x = 0;
+
+        }
+        
+        if (player.x + player.width > canvas.width) {
+
+            player.x = canvas.width - player.width;
+
+        }
+
+    }
+
+    addEventListener('keydown', function(e) {
+
+        if (e.code == 'ArrowRight') player.vxr = player.speed;
+        if (e.code == 'ArrowLeft') player.vxl = -player.speed;
+        if (e.code == 'ArrowUp') player.vyu = -player.speed;
+        if (e.code == 'ArrowDown') player.vyd = player.speed;
+
+    });
+
+    addEventListener('keyup', function(e) {
+
+        if (e.code == 'ArrowRight') player.vxr = 0;
+        if (e.code == 'ArrowLeft') player.vxl = 0;
+        if (e.code == 'ArrowUp') player.vyu = 0;
+        if (e.code == 'ArrowDown') player.vyd = 0;
+
+    });
+
+    /* Emeralds */
+
+    var img = new Image();
+
+    // Set the src attribute to the path of your image file
+    img.src = 'static/emerald.svg';
+    
+    // Once the image has loaded, draw it onto the canvas
+    img.onload = function() {
+
+        ctx.drawImage(img, 50, 50);
+        
+    };
+
+
+
+    function update() {
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+        player.x += player.vxl;
+        player.x += player.vxr;
+
+        player.y += player.vyu;
+        player.y += player.vyd;
+
+        ctx.fillStyle = '#FFF';
+        ctx.fillRect(player.x, player.y, player.width, player.height)
+        
+        requestAnimationFrame(update)
+
+        movePlayer();
+
+    }
+
+    update();
+
+</script>
+
+</html>
